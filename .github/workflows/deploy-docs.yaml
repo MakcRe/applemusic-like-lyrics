@@ -30,6 +30,7 @@ jobs:
       - name: 安装依赖并构建网站
         run: |
           pnpm i
+          pnpm lerna run build --scope "*/react-full" --scope "*/vue"
           pnpm -F @applemusic-like-lyrics/docs build
         env:
           YARN_ENABLE_IMMUTABLE_INSTALLS: false
