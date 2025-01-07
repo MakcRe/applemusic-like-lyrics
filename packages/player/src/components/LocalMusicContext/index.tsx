@@ -245,7 +245,7 @@ const LyricContext: FC = () => {
 
 		(async () => {
 			const fileListRes = await fetch(
-				"https://api.github.com/repos/Steve-xmh/amll-ttml-db/contents/raw-lyrics",
+				"https://api.github.com/repos/Steve-xmh/amll-ttml-db/contents",
 				{
 					signal: sig.signal,
 					redirect: "follow",
@@ -255,7 +255,7 @@ const LyricContext: FC = () => {
 			if (fileListRes.status < 200 || fileListRes.status > 399) {
 				console.warn(
 					TTML_LOG_TAG,
-					"TTML DB 歌词库同步失败",
+					"TTML DB 歌词库同步失败：获取根目录文件列表失败",
 					fileListRes.status,
 					fileListRes.statusText,
 				);
@@ -263,10 +263,49 @@ const LyricContext: FC = () => {
 			}
 
 			const fileList = await fileListRes.json();
-			const fileMap = Object.fromEntries(fileList.map((v) => [v.name, v]));
+			const rawLyricsEntry = fileList.find(
+				(v) => v.name === "raw-lyrics" && v.type === "dir",
+			);
+
+			if (!rawLyricsEntry) {
+				console.warn(TTML_LOG_TAG, "未找到 raw-lyrics 目录");
+				return;
+			}
+			console.log(
+				TTML_LOG_TAG,
+				"raw-lyric 目录已找到，SHA 为",
+				rawLyricsEntry.sha,
+			);
+
+			const rawLyricsRes = await fetch(
+				`https://api.github.com/repos/Steve-xmh/amll-ttml-db/git/trees/${rawLyricsEntry.sha}`,
+				{
+					signal: sig.signal,
+					redirect: "follow",
+				},
+			);
+
+			if (rawLyricsRes.status < 200 || rawLyricsRes.status > 399) {
+				console.warn(
+					TTML_LOG_TAG,
+					"TTML DB 歌词库同步失败：获取 raw-lyrics 文件夹下的文件列表失败",
+					rawLyricsRes.status,
+					rawLyricsRes.statusText,
+				);
+				return;
+			}
+
+			const lyricFileList = await rawLyricsRes.json();
+
+			const fileMap = Object.fromEntries(
+				lyricFileList.tree.map((v) => [v.path, v]),
+			);
+			console.log(fileMap);
 
 			const localFileList = new Set<string>();
-			const remoteFileList = new Set<string>(fileList.map((v) => v.name));
+			const remoteFileList = new Set<string>(
+				lyricFileList.tree.map((v) => v.path),
+			);
 
 			await db.ttmlDB.each((obj) => {
 				localFileList.add(obj.name);
@@ -277,50 +316,61 @@ const LyricContext: FC = () => {
 
 			const shouldFetchList = remoteFileList.difference(localFileList);
 
-			console.log(TTML_LOG_TAG, "需要下载的歌词数量", shouldFetchList.size);
+			console.log(
+				TTML_LOG_TAG,
+				"需要下载的歌词数量",
+				shouldFetchList.size,
+				shouldFetchList,
+			);
 
 			let synced = 0;
 			let errored = 0;
 
 			const fetchTasks = [];
-			
+
 			// Safari 目前不支持对迭代器对象使用 map 方法
 			for (const fileName of shouldFetchList.keys()) {
-				fetchTasks.push((async () => {
-					const lyricRes = await fetch(fileMap[fileName].download_url, {
-						signal: sig.signal,
-						redirect: "follow",
-					});
-
-					if (fileListRes.status < 200 || fileListRes.status > 399) {
-						console.warn(
-							"同步歌词文件",
-							fileName,
-							"失败",
-							fileListRes.status,
-							fileListRes.statusText,
+				if (!(fileName in fileMap)) continue;
+				fetchTasks.push(
+					(async () => {
+						const lyricRes = await fetch(
+							`https://raw.githubusercontent.com/Steve-xmh/amll-ttml-db/main/raw-lyrics/${fileMap[fileName].path}`,
+							{
+								signal: sig.signal,
+								redirect: "follow",
+							},
 						);
-						errored++;
-						return;
-					}
 
-					const lyricContent = await lyricRes.text();
+						if (fileListRes.status < 200 || fileListRes.status > 399) {
+							console.warn(
+								"同步歌词文件",
+								fileName,
+								"失败",
+								fileListRes.status,
+								fileListRes.statusText,
+							);
+							errored++;
+							return;
+						}
 
-					try {
-						const ttml = parseTTML(lyricContent);
-						db.ttmlDB.add({
-							name: fileName,
-							content: ttml,
-							raw: lyricContent,
-						});
-						synced++;
-					} catch (err) {
-						console.warn("下载并解析歌词文件", fileName, "失败", err);
-						errored++;
-					}
-				})())
+						const lyricContent = await lyricRes.text();
+
+						try {
+							const ttml = parseTTML(lyricContent);
+							db.ttmlDB.add({
+								name: fileName,
+								content: ttml,
+								raw: lyricContent,
+							});
+							synced++;
+						} catch (err) {
+							console.warn("下载并解析歌词文件", fileName, "失败", err);
+							errored++;
+						}
+					})(),
+				);
 			}
-			
+
 			await Promise.all(fetchTasks);
 
 			console.log(
