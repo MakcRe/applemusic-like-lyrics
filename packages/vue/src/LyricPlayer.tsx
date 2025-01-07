@@ -3,6 +3,7 @@ import {
 	LyricPlayer as CoreLyricPlayer,
 	type LyricLine,
 	type LyricLineMouseEvent,
+	type LyricPlayerBase,
 	type spring,
 } from "@applemusic-like-lyrics/core";
 import {
@@ -184,7 +185,7 @@ export interface LyricPlayerRef {
 	/**
 	 * 歌词播放实例
 	 */
-	lyricPlayer: Ref<typeof CoreLyricPlayer | undefined>;
+	lyricPlayer: Ref<LyricPlayerBase | undefined>;
 	/**
 	 * 将歌词播放实例的元素包裹起来的 DIV 元素实例
 	 */

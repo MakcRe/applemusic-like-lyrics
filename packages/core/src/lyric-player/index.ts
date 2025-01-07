@@ -5,7 +5,9 @@ export * from "./canvas/index.ts";
 export * from "./dom-slim/index.ts";
 export * from "./dom/index.ts";
 
-/**
- * 默认导出的歌词播放组件
- */
-export const LyricPlayer = DomLyricPlayer;
+export {
+	/**
+	 * 默认导出的歌词播放组件
+	 */
+	DomLyricPlayer as LyricPlayer,
+};

@@ -5,14 +5,15 @@
  * @author SteveXMH
  */
 
+import * as lyrics from "@applemusic-like-lyrics/lyric";
 import {
 	type LyricLine as RawLyricLine,
 	parseLrc,
 	parseLys,
 	parseQrc,
+	parseTTML,
 	parseYrc,
 } from "@applemusic-like-lyrics/lyric";
-import { parseTTML } from "@applemusic-like-lyrics/ttml";
 import GUI from "lil-gui";
 import Stats from "stats.js";
 import type { LyricLine } from ".";
@@ -27,6 +28,8 @@ import {
 	type LyricLineMouseEvent,
 } from "./lyric-player";
 import type { SpringParams } from "./utils/spring";
+
+(window as any).lyrics = lyrics;
 
 const audio = document.createElement("audio");
 audio.volume = 0.5;
@@ -126,7 +129,7 @@ gui
 	.name("歌词文件")
 	.onFinishChange(async (url: string) => {
 		lyricPlayer.setLyricLines(
-			parseTTML(await (await fetch(url)).text()).lyricLines,
+			parseTTML(await (await fetch(url)).text()).lines.map(mapTTMLLyric),
 		);
 	});
 gui
@@ -274,16 +277,16 @@ declare global {
 	}
 }
 
-window.globalLyricPlayer = lyricPlayer;
+(window as any).globalLyricPlayer = lyricPlayer;
 
-const waitFrame = (): Promise<void> =>
+const waitFrame = (): Promise<number> =>
 	new Promise((resolve) => requestAnimationFrame(resolve));
 const mapLyric = (
 	line: RawLyricLine,
 	_i: number,
 	_lines: RawLyricLine[],
 ): LyricLine => ({
-	words: line.words,
+	words: line.words.map((word) => ({ obscene: false, ...word })),
 	startTime: line.words[0]?.startTime ?? 0,
 	endTime:
 		line.words[line.words.length - 1]?.endTime ?? Number.POSITIVE_INFINITY,
@@ -293,11 +296,16 @@ const mapLyric = (
 	isDuet: false,
 });
 
+const mapTTMLLyric = (line: RawLyricLine): LyricLine => ({
+	...line,
+	words: line.words.map((word) => ({ obscene: false, ...word })),
+});
+
 async function loadLyric() {
 	const lyricFile = debugValues.lyric;
 	const content = await (await fetch(lyricFile)).text();
 	if (lyricFile.endsWith(".ttml")) {
-		lyricPlayer.setLyricLines(parseTTML(content).lyricLines);
+		lyricPlayer.setLyricLines(parseTTML(content).lines.map(mapTTMLLyric));
 	} else if (lyricFile.endsWith(".lrc")) {
 		lyricPlayer.setLyricLines(parseLrc(content).map(mapLyric));
 	} else if (lyricFile.endsWith(".yrc")) {

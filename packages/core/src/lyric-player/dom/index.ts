@@ -8,7 +8,7 @@ import type { LyricLine } from "../../interfaces.ts";
 import "../../styles/index.css";
 import styles from "../../styles/lyric-player.module.css";
 import { debounce } from "../../utils/debounce.js";
-import { LyricPlayerBase } from "../base.ts";
+import { type LyricLineBase, LyricPlayerBase } from "../base.ts";
 import { LyricLineEl, type RawLyricLineMouseEvent } from "./lyric-line.ts";
 
 /**
@@ -23,7 +23,7 @@ export class LyricLineMouseEvent extends MouseEvent {
 		/**
 		 * 歌词行元素
 		 */
-		public readonly line: LyricLineEl,
+		public readonly line: LyricLineBase,
 		event: MouseEvent,
 	) {
 		super(`line-${event.type}`, event);

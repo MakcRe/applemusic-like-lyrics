@@ -355,7 +355,7 @@ export const PrebuiltLyricPlayer: FC<HTMLProps<HTMLDivElement>> = ({
 	const [alignAnchor, setAlignAnchor] = useState<"center" | "bottom" | "top">(
 		"top",
 	);
-	const coverElRef = useRef<HTMLElement>(null);
+	const coverElRef = useRef<HTMLDivElement>(null);
 	const layoutRef = useRef<HTMLDivElement>(null);
 	const backgroundRenderer = useAtomValue(lyricBackgroundRendererAtom);
 	const showBottomControl = useAtomValue(showBottomControlAtom);
