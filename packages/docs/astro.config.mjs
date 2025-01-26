@@ -3,6 +3,8 @@ import starlight from "@astrojs/starlight";
 import { defineConfig } from "astro/config";
 import { createStarlightTypeDocPlugin } from "starlight-typedoc";
 
+import react from "@astrojs/react";
+
 const [coreStarlightTypeDoc, coreTypeDocSidebarGroup] =
 	createStarlightTypeDocPlugin();
 const [reactStarlightTypeDoc, reactTypeDocSidebarGroup] =
@@ -18,6 +20,7 @@ const [lyricStarlightTypeDoc, lyricTypeDocSidebarGroup] =
 export default defineConfig({
 	base: "applemusic-like-lyrics",
 	integrations: [
+		react(),
 		starlight({
 			favicon: "favicon.ico",
 			title: "Apple Music-like Lyrics",
@@ -56,6 +59,9 @@ export default defineConfig({
 						label: "react",
 						collapsed: true,
 					},
+					typeDoc: {
+						plugin: ["typedoc-plugin-mark-react-functional-components"],
+					},
 				}),
 				vueStarlightTypeDoc({
 					entryPoints: ["../vue/src/index.ts"],
@@ -65,6 +71,9 @@ export default defineConfig({
 						label: "vue",
 						collapsed: true,
 					},
+					typeDoc: {
+						plugin: ["typedoc-plugin-vue"],
+					},
 				}),
 				reactFullStarlightTypeDoc({
 					entryPoints: ["../react-full/src/index.ts"],
@@ -73,6 +82,9 @@ export default defineConfig({
 					sidebar: {
 						label: "react-full",
 						collapsed: true,
+					},
+					typeDoc: {
+						plugin: ["typedoc-plugin-mark-react-functional-components"],
 					},
 				}),
 				lyricStarlightTypeDoc({

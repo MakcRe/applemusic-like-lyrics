@@ -7,7 +7,6 @@ import type {
 import { LyricPlayer as DefaultLyricPlayer } from "@applemusic-like-lyrics/core";
 import {
 	type HTMLProps,
-	type ReactNode,
 	forwardRef,
 	useEffect,
 	useImperativeHandle,
@@ -113,7 +112,7 @@ export interface LyricPlayerProps {
 	 *
 	 * 这个元素始终在歌词的底部，可以用于显示歌曲创作者等信息
 	 */
-	bottomLine?: ReactNode;
+	bottomLine?: Parameters<typeof createPortal>[0];
 	/**
 	 * 需要用于创建歌词播放组件的类实例
 	 */

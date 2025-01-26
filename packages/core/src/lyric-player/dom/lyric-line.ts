@@ -57,7 +57,7 @@ function generateFadeGradient(
 
 export class RawLyricLineMouseEvent extends MouseEvent {
 	constructor(
-		public readonly line: LyricLineEl,
+		public readonly line: LyricLineBase,
 		event: MouseEvent,
 	) {
 		super(event.type, event);

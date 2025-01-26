@@ -12,7 +12,7 @@ export const AudioFFTVisualizer: FC<
 	} & HTMLProps<HTMLCanvasElement>
 > = ({ fftData, ...props }) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
-	const fftDataRef = useRef<number[]>();
+	const fftDataRef = useRef<number[]>(undefined);
 	if (fftDataRef.current === undefined) {
 		fftDataRef.current = fftData;
 	}

@@ -1,7 +1,7 @@
-import { type HTMLProps, useEffect, useRef, useState } from "react";
-import styles from "./index.module.css";
-import { Spring } from "../../utils/spring";
 import classNames from "classnames";
+import { type HTMLProps, type JSX, useEffect, useRef, useState } from "react";
+import { Spring } from "../../utils/spring";
+import styles from "./index.module.css";
 
 export interface SliderProps {
 	onAfterChange?: (v: number) => void;
