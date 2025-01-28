@@ -477,7 +477,7 @@ export abstract class LyricPlayerBase
 		for (const lastHotId of this.hotLines) {
 			const line = this.processedLines[lastHotId];
 			if (line) {
-				if (line.isBG) return;
+				if (line.isBG) continue;
 				const nextLine = this.processedLines[lastHotId + 1];
 				if (nextLine?.isBG) {
 					const nextMainLine = this.processedLines[lastHotId + 2];

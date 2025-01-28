@@ -22,11 +22,7 @@ import {
 	MeshGradientRenderer,
 	PixiRenderer,
 } from "./bg-render";
-import {
-	CanvasLyricPlayer,
-	type DomLyricPlayer,
-	type LyricLineMouseEvent,
-} from "./lyric-player";
+import { DomLyricPlayer, type LyricLineMouseEvent } from "./lyric-player";
 import type { SpringParams } from "./utils/spring";
 
 (window as any).lyrics = lyrics;
@@ -70,8 +66,10 @@ const debugValues = {
 		this.playing = false;
 		if (audio.paused) {
 			audio.play();
+			lyricPlayer.resume();
 		} else {
 			audio.pause();
+			lyricPlayer.pause();
 		}
 	},
 	lineSprings: {
@@ -235,7 +233,7 @@ const progress = playerGui
 playerGui.add(debugValues, "play").name("加载/播放");
 playerGui.add(debugValues, "pause").name("暂停/继续");
 
-const lyricPlayer = new CanvasLyricPlayer();
+const lyricPlayer = new DomLyricPlayer();
 
 lyricPlayer.addEventListener("line-click", (evt) => {
 	const e = evt as LyricLineMouseEvent;
@@ -314,6 +312,51 @@ async function loadLyric() {
 		lyricPlayer.setLyricLines(parseLys(content).map(mapLyric));
 	} else if (lyricFile.endsWith(".qrc")) {
 		lyricPlayer.setLyricLines(parseQrc(content).map(mapLyric));
+	} else if (lyricFile === "bug") {
+		const buildLyricLines = (
+			lyric: string,
+			startTime = 1000,
+			otherParams: Partial<LyricLine> = {},
+		): LyricLine => {
+			let curTime = startTime;
+			const words = [];
+			for (const word of lyric.split("|")) {
+				const [text, duration] = word.split(",");
+				const endTime = curTime + Number.parseInt(duration);
+				words.push({
+					word: text,
+					startTime: curTime,
+					endTime,
+					obscene: false,
+				});
+				curTime = endTime;
+			}
+			return {
+				startTime,
+				endTime: curTime + 3000,
+				translatedLyric: "",
+				romanLyric: "",
+				isBG: false,
+				isDuet: false,
+				words,
+				...otherParams,
+			};
+		};
+
+		const DEMO_LYRIC: LyricLine[] = [
+			buildLyricLines(
+				"Apple ,750|Music ,500|Like ,500|Ly,400|ri,500|cs ,250",
+				1000,
+			),
+			buildLyricLines("BG ,750|Lyrics ,1000", 2000, {
+				isBG: true,
+			}),
+			buildLyricLines("Next ,1000|Lyrics,1000", 2500, {
+				// isDuet: true,
+			}),
+		];
+
+		lyricPlayer.setLyricLines(DEMO_LYRIC);
 	}
 }
 
