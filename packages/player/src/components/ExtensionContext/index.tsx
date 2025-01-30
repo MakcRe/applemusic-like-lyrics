@@ -54,7 +54,7 @@ const SingleExtensionContext: FC<{
 }> = ({ extensionMeta, waitForDependency, extPromise }) => {
 	const store = useStore();
 	const { i18n } = useTranslation();
-	const cancelRef = useRef<Notify>();
+	const cancelRef = useRef<Notify>(undefined);
 	const setLoadedExtension = useSetAtom(loadedExtensionAtom);
 	useEffect(() => {
 		let canceled = false;

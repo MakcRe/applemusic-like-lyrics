@@ -40,7 +40,7 @@
 }
 
 .lyricBgLine {
-	opacity: 0;
+	opacity: 0.0001;
 	font-size: max(calc(1em * var(--amll-lp-bg-line-scale, 0.7)), 10px);
 	transition: opacity 0.25s, scale 0.5s, filter 0.2s, background-color 0.25s,
 		box-shadow 0.25s;
@@ -67,6 +67,10 @@
 		.lyricDuetLine {
 			padding-left: 15%;
 		}
+	}
+
+	&:not(:global(.playing)) > .lyricBgLine {
+		opacity: 0.4;
 	}
 }
 

@@ -627,7 +627,9 @@ export abstract class LyricPlayerBase
 			.reduce(
 				(acc, el) =>
 					acc +
-					(el.getLine().isBG ? 0 : (this.lyricLinesSize.get(el)?.[1] ?? 0)),
+					(el.getLine().isBG && this.isPlaying
+						? 0
+						: (this.lyricLinesSize.get(el)?.[1] ?? 0)),
 				0,
 			);
 		this.scrollBoundary[0] = -scrollOffset;
@@ -673,8 +675,12 @@ export abstract class LyricPlayerBase
 			let targetOpacity: number;
 
 			if (this.hidePassedLines) {
-				if (i < (interlude ? interlude[2] + 1 : this.scrollToIndex)) {
-					targetOpacity = 0;
+				if (
+					i < (interlude ? interlude[2] + 1 : this.scrollToIndex) &&
+					this.isPlaying
+				) {
+					// 为了避免浏览器优化，这里使用了一个极小但不为零的值（几乎不可见）
+					targetOpacity = 0.00001;
 				} else if (hasBuffered) {
 					targetOpacity = 0.85;
 				} else {
@@ -706,30 +712,33 @@ export abstract class LyricPlayerBase
 
 			const SCALE_ASPECT = this.enableScale ? 97 : 100;
 
+			let targetScale = 100;
+
+			if (!isActive && this.isPlaying) {
+				if (line.isBG) {
+					targetScale = 75;
+				} else {
+					targetScale = SCALE_ASPECT;
+				}
+			}
+
 			lineObj.setTransform(
 				curPos,
-				isActive ? 100 : line.isBG ? 75 : SCALE_ASPECT,
+				targetScale,
 				targetOpacity,
 				window.innerWidth <= 1024 ? blurLevel * 0.8 : blurLevel,
 				force,
 				delay,
 			);
-			if (line.isBG && isActive) {
+			if (line.isBG && (isActive || !this.isPlaying)) {
 				curPos += this.lyricLinesSize.get(lineObj)?.[1] ?? 0;
 			} else if (!line.isBG) {
 				curPos += this.lyricLinesSize.get(lineObj)?.[1] ?? 0;
 			}
 			if (curPos >= 0 && !this.isSeeking) {
 				if (!line.isBG) delay += baseDelay;
-				// if (i >= this.scrollToIndex - 1) baseDelay *= 1.05;
-				// baseDelay = Math.min(baseDelay, 0.055);
 
-				// delay += 0.05;
-
-				// baseDelay = baseDelay > 0.15 ? 0 : baseDelay;
-				// delay = (i - this.scrollToIndex) * 0.06;
 				if (i >= this.scrollToIndex) baseDelay /= 1.05;
-				// baseDelay = Math.max(baseDelay, 0.04);
 			}
 		});
 		this.scrollBoundary[1] = curPos + this.scrollOffset - this.size[1] / 2;
@@ -781,17 +790,26 @@ export abstract class LyricPlayerBase
 			}
 		}
 	}
+	protected isPlaying = true;
 	/**
-	 * 暂停部分效果演出，目前会暂停播放间奏点的动画
+	 * 暂停部分效果演出，目前会暂停播放间奏点的动画，且将背景歌词显示出来
 	 */
 	pause() {
 		this.interludeDots.pause();
+		if (this.isPlaying) {
+			this.isPlaying = false;
+			this.calcLayout();
+		}
 	}
 	/**
 	 * 恢复部分效果演出，目前会恢复播放间奏点的动画
 	 */
 	resume() {
 		this.interludeDots.resume();
+		if (!this.isPlaying) {
+			this.isPlaying = true;
+			this.calcLayout();
+		}
 	}
 	/**
 	 * 更新动画，这个函数应该被逐帧调用或者在以下情况下调用一次：

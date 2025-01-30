@@ -173,6 +173,7 @@ export class DomLyricPlayer extends LyricPlayerBase {
 
 	override pause() {
 		super.pause();
+		this.element.classList.remove("playing");
 		this.interludeDots.pause();
 		for (const line of this.currentLyricLineObjects) {
 			line.pause();
@@ -181,6 +182,7 @@ export class DomLyricPlayer extends LyricPlayerBase {
 
 	override resume() {
 		super.resume();
+		this.element.classList.add("playing");
 		this.interludeDots.resume();
 		for (const line of this.currentLyricLineObjects) {
 			line.resume();
