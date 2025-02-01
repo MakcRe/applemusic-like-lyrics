@@ -3,9 +3,8 @@ use skia_safe::{
         FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, TextStyle,
         TypefaceFontProvider,
     },
-    Canvas, Color4f, Font, FontMgr, Paint, Point, Rect, Size, TextBlob, Typeface,
+    Canvas, Color4f, FontMgr, Paint, Point, Rect, Size, Typeface,
 };
-use tracing::*;
 
 #[derive(Debug)]
 struct LyricLineElement {

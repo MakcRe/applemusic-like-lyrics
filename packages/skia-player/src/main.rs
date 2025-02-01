@@ -1,9 +1,7 @@
 mod renderer;
 mod server;
 mod window;
-use std::time::Instant;
 
-use skia_safe::{gpu::gl::FramebufferInfo, Color4f, Data, Font, MaskFilter, TextBlob, Typeface};
 use tracing::*;
 use ws_protocol::Body;
 
@@ -68,8 +66,8 @@ fn main() {
             let canvas = win.canvas();
             renderer.render(canvas);
         }
-        WindowEvent::WindowResize(w, h) => {
-            renderer.set_size(w as _, h as _);
+        WindowEvent::WindowResize(w, h, scale) => {
+            renderer.set_size(w as _, h as _, scale);
         }
         WindowEvent::VSyncEnabled(enabled) => {
             renderer.set_vsync(enabled);

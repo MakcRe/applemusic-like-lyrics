@@ -1,6 +1,5 @@
-use glfw::{Action, Context, Monitor, MouseButton};
+use glfw::{Action, Context, MouseButton};
 use skia_safe::gpu::gl::FramebufferInfo;
-use tracing::*;
 
 pub struct Window<T = ()> {
     window: glfw::Window,
@@ -12,7 +11,7 @@ pub struct Window<T = ()> {
 }
 
 pub enum WindowEvent<T = ()> {
-    WindowResize(i32, i32),
+    WindowResize(i32, i32, f32),
     WindowRedraw,
     WindowScale(f32, f32),
     MouseMove(f64, f64),
@@ -64,6 +63,11 @@ impl<T> Window<T> {
         self.surface.canvas()
     }
 
+    pub fn get_window_scale(&self) -> f32 {
+        let scale = self.window.get_content_scale();
+        scale.0.min(scale.1)
+    }
+
     pub fn run(&mut self, mut on_events: impl FnMut(&mut Self, WindowEvent<T>)) {
         self.window.make_current();
         let mut vsync = true;
@@ -71,7 +75,10 @@ impl<T> Window<T> {
         self.window.set_all_polling(true);
         {
             let (w, h) = self.window.get_framebuffer_size();
-            on_events(self, WindowEvent::WindowResize(w, h));
+            on_events(
+                self,
+                WindowEvent::WindowResize(w, h, self.get_window_scale()),
+            );
         }
         while !self.window.should_close() {
             on_events(self, WindowEvent::WindowRedraw);
@@ -92,7 +99,10 @@ impl<T> Window<T> {
                                 &mut self.gr_context,
                             );
                             let (w, h) = self.window.get_framebuffer_size();
-                            on_events(self, WindowEvent::WindowResize(w, h));
+                            on_events(
+                                self,
+                                WindowEvent::WindowResize(w, h, self.get_window_scale()),
+                            );
                         }
                     }
                     glfw::WindowEvent::CursorPos(x, y) => {
@@ -120,18 +130,13 @@ impl<T> Window<T> {
                         _ => {}
                     },
                     glfw::WindowEvent::Key(key, code, action, _modifier) => {
-                        if action == Action::Press {
-                            match key {
-                                glfw::Key::V => {
-                                    vsync = !vsync;
-                                    on_events(self, WindowEvent::VSyncEnabled(vsync));
-                                    if vsync {
-                                        self.glfw.set_swap_interval(glfw::SwapInterval::Sync(1));
-                                    } else {
-                                        self.glfw.set_swap_interval(glfw::SwapInterval::None);
-                                    }
-                                }
-                                _ => {}
+                        if action == Action::Press && key == glfw::Key::V {
+                            vsync = !vsync;
+                            on_events(self, WindowEvent::VSyncEnabled(vsync));
+                            if vsync {
+                                self.glfw.set_swap_interval(glfw::SwapInterval::Sync(1));
+                            } else {
+                                self.glfw.set_swap_interval(glfw::SwapInterval::None);
                             }
                         }
                     }
