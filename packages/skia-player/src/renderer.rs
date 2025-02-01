@@ -12,15 +12,17 @@ use skia_safe::{
     textlayout::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle},
     utils::Camera3D,
     BlurStyle, Canvas, ClipOp, Color4f, Data, Font, FontMgr, IRect, ISize, Image, ImageFilter,
-    MaskFilter, Paint, Point, RRect, Rect, RuntimeEffect, SamplingOptions, Shader, Size, TextBlob,
-    TextEncoding, Typeface,
+    MaskFilter, Paint, PathEffect, Point, Point3, RRect, Rect, RuntimeEffect, SamplingOptions,
+    Shader, Size, TextBlob, TextEncoding, Typeface,
 };
 use tracing::info;
 
 use self::lyric_renderer::LyricRenderer;
 
-const PINGFANG_SC: &[u8] = include_bytes!("../assets/PingFangSC-Regular.ttf");
-const SF_PRO_TEXT: &[u8] = include_bytes!("../assets/SF-Pro.ttf");
+// const PINGFANG_SC: &[u8] = include_bytes!("../assets/PingFangSC-Regular.ttf");
+// const SF_PRO_TEXT: &[u8] = include_bytes!("../assets/SF-Pro.ttf");
+const PINGFANG_SC: &[u8] = &[];
+const SF_PRO_TEXT: &[u8] = &[];
 
 struct ImageSprite {
     image: Image,
@@ -129,10 +131,26 @@ struct LyricLineObject {
 
 impl Renderer {
     pub fn new() -> Self {
-        let pingfang_type_face =
-            Typeface::from_data(unsafe { Data::new_bytes(PINGFANG_SC) }, None).unwrap();
-        let sf_pro_type_face =
-            Typeface::from_data(unsafe { Data::new_bytes(SF_PRO_TEXT) }, None).unwrap();
+        let font_mgr = FontMgr::new();
+
+        // for family in font_mgr.family_names() {
+        //     info!("Font family: {}", family);
+        // }
+
+        // let pingfang_type_face = font_mgr
+        //     .new_from_data(&Data::new_copy(PINGFANG_SC), None)
+        //     .unwrap();
+        // let sf_pro_type_face = font_mgr
+        //     .new_from_data(&Data::new_copy(SF_PRO_TEXT), None)
+        //     .unwrap();
+        let pingfang_type_face = font_mgr
+            .match_family("PingFang UI SC")
+            .new_typeface(0)
+            .unwrap();
+        let sf_pro_type_face = font_mgr
+            .match_family("SF Pro Text")
+            .new_typeface(0)
+            .unwrap();
 
         Self {
             lyric_renderer: LyricRenderer::new(
@@ -310,6 +328,16 @@ impl Renderer {
         let radius = album_size * 0.05;
         let rrect = RRect::new_rect_xy(rect, radius, radius);
 
+        {
+            let rrect = skia_safe::Path::rrect(rrect, None);
+
+            canvas.draw_path(
+                &rrect,
+                skia_safe::Paint::new(Color4f::new(0., 0., 0., 0.35), None)
+                    .set_mask_filter(MaskFilter::blur(BlurStyle::Normal, album_size * 0.05, None)),
+            );
+        }
+
         canvas.save();
         canvas.clip_rrect(rrect, None, Some(true));
         if let Some(img) = &self.cur_album_images {
@@ -332,7 +360,17 @@ impl Renderer {
                 &skia_safe::Paint::new(Color4f::new(1., 1., 1., alpha), None),
             );
         }
+
         canvas.restore();
+
+        canvas.draw_rrect(
+            rrect,
+            Paint::new(Color4f::new(0., 0., 0., 0.35), None)
+                .set_stroke(true)
+                .set_anti_alias(true)
+                .set_stroke_width(2.),
+        );
+
         self.lyric_renderer.render(canvas);
     }
 

@@ -38,7 +38,9 @@ fn main() {
                     std::thread::spawn(move || match attohttpc::get(img_url).send() {
                         Ok(res) => match res.bytes() {
                             Ok(data) => {
-                                if let Err(err) = win_sx.send(GlobalMessage::SetAlbumImageData(data)) {
+                                if let Err(err) =
+                                    win_sx.send(GlobalMessage::SetAlbumImageData(data))
+                                {
                                     warn!("Failed to send message to window: {}", err)
                                 }
                             }

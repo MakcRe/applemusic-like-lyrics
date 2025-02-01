@@ -24,6 +24,7 @@ impl LyricLineElement {
 
 #[derive(Debug)]
 pub struct LyricRenderer {
+    tf_provider: TypefaceFontProvider,
     pingfang_type_face: Typeface,
     sf_pro_type_face: Typeface,
     progress: f64,
@@ -33,9 +34,20 @@ pub struct LyricRenderer {
 
 impl LyricRenderer {
     pub fn new(pingfang_type_face: Typeface, sf_pro_type_face: Typeface) -> Self {
+        let mut tf_provider = TypefaceFontProvider::new();
+        tf_provider.register_typeface(
+            pingfang_type_face.clone(),
+            Some(pingfang_type_face.family_name().as_str()),
+        );
+        tf_provider.register_typeface(
+            sf_pro_type_face.clone(),
+            Some(sf_pro_type_face.family_name().as_str()),
+        );
+
         Self {
             pingfang_type_face,
             sf_pro_type_face,
+            tf_provider,
             progress: 0.,
             rect: Rect::new_empty(),
             lines: Vec::with_capacity(1024),
@@ -141,7 +153,7 @@ impl LyricRenderer {
     }
 
     pub fn layout(&mut self) {
-        let width = self.rect.width();
+        let width = self.rect.width() * 0.8;
         let mut font_collection = FontCollection::new();
         let font_mgr = FontMgr::new();
         font_collection
@@ -151,7 +163,7 @@ impl LyricRenderer {
             TextStyle::new()
                 .set_font_size(self.rect.height() * 0.05)
                 .set_foreground_paint(
-                    Paint::new(Color4f::new(1.0, 1.0, 1.0, 0.8), None)
+                    Paint::new(Color4f::new(1.0, 1.0, 1.0, 0.4), None)
                         .set_blend_mode(skia_safe::BlendMode::Plus),
                 ),
         );
@@ -160,20 +172,12 @@ impl LyricRenderer {
             TextStyle::new()
                 .set_font_size(self.rect.height() * 0.025)
                 .set_foreground_paint(
-                    Paint::new(Color4f::new(1.0, 1.0, 1.0, 0.5), None)
+                    Paint::new(Color4f::new(1.0, 1.0, 1.0, 0.2), None)
                         .set_blend_mode(skia_safe::BlendMode::Plus),
                 ),
         );
-        let mut tf_provider = TypefaceFontProvider::new();
-        tf_provider.register_typeface(
-            self.pingfang_type_face.clone(),
-            Some(self.pingfang_type_face.family_name()),
-        );
-        tf_provider.register_typeface(
-            self.sf_pro_type_face.clone(),
-            Some(self.sf_pro_type_face.family_name()),
-        );
-        font_collection.set_asset_font_manager(Some(tf_provider.into()));
+
+        font_collection.set_asset_font_manager(Some(self.tf_provider.clone().into()));
         for line in &mut self.lines {
             let mut param = ParagraphBuilder::new(&param_style, font_collection.clone());
             for word in &line.line.words {

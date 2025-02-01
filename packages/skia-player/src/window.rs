@@ -20,7 +20,7 @@ pub enum WindowEvent<T = ()> {
     MouseLeftUp,
     MouseRightDown,
     MouseRightUp,
-    
+
     VSyncEnabled(bool),
 
     UserEvent(T),
@@ -47,7 +47,7 @@ impl<T> Window<T> {
 
         let interface = skia_safe::gpu::gl::Interface::new_native().unwrap();
 
-        let mut gr_context = skia_safe::gpu::DirectContext::new_gl(Some(interface), None).unwrap();
+        let mut gr_context = skia_safe::gpu::direct_contexts::make_gl(interface, None).unwrap();
 
         let surface = Self::create_surface(&window, Self::FB_INFO, &mut gr_context);
         Self {
@@ -76,7 +76,7 @@ impl<T> Window<T> {
         while !self.window.should_close() {
             on_events(self, WindowEvent::WindowRedraw);
             self.gr_context
-                .flush_and_submit_surface(&mut self.surface, false);
+                .flush_and_submit_surface(&mut self.surface, None);
             self.window.swap_buffers();
             self.glfw.poll_events();
             for event in self.rx.try_iter().collect::<Vec<_>>() {
